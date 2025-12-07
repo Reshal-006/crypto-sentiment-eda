@@ -1,0 +1,14 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Data (raw & processed) - keep data local, not on GitHub
+data/raw/*
+data/processed/*
