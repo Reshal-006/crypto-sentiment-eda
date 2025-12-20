@@ -1,108 +1,81 @@
-***
+# Crypto Sentiment EDA Dashboard
 
-# Cryptocurrency Price and Sentiment EDA
+Multi-asset crypto analytics dashboard (Flask) powered by a notebook pipeline.
 
-Exploratory data analysis (EDA) of Bitcoin and Ethereum daily price data together with the Crypto Fear & Greed Index. The project focuses on how prices, returns, volatility, and market sentiment behave over time and how they relate to each other.
+This project combines:
+- A notebook-based data pipeline (collection + processing)
+- A web dashboard to visualize prices, returns/volatility, and the Crypto Fear & Greed Index
 
-## Features
+## Key Features
 
-- Downloads daily OHLCV data for BTC and ETH from Yahoo Finance  
-- Fetches the Crypto Fear & Greed Index and aligns it with price data  
-- Cleans and merges all sources into a single time-series dataset  
-- Engineers returns, moving averages, and rolling volatility features  
-- Performs EDA on:
-  - Price and return distributions  
-  - Sentiment distribution and regimes (Fear vs Greed)  
-  - Correlations between returns, volatility, and sentiment  
-  - Simple lag analysis (does sentiment lead returns?)  
+- Select multiple cryptocurrencies in the UI (e.g., BTC, ETH, BNB, XRP, SOL)
+- Choose a date range and click **Fetch Data**
+- The dashboard triggers the notebook pipeline headlessly (01 → 02) and reloads the processed dataset
+- Charts and tables render dynamically for all selected assets
 
-## Tech Stack
+## How The Data Works
 
-- Python
-- pandas, NumPy  
-- yfinance, requests  
-- matplotlib, seaborn  
-- Jupyter Notebooks  
+All data collection happens in the notebooks.
 
-## Project Structure
+- `notebooks/01_data_collection.ipynb`
+  - Downloads price data for the selected tickers
+  - Fetches the Fear & Greed Index
+  - Writes raw files to `data/raw/`
+- `notebooks/02_data_cleaning.ipynb`
+  - Loads raw `*_prices.csv` files
+  - Engineers features (returns, moving averages, rolling volatility)
+  - Writes the processed dataset to `data/processed/merged_clean.csv`
 
-```text
-.
-├── data
-│   ├── raw
-│   │   ├── btc_prices.csv          # Raw BTC OHLCV
-│   │   ├── eth_prices.csv          # Raw ETH OHLCV
-│   │   └── fear_greed_index.csv    # Raw sentiment data
-│   └── processed
-│       └── merged_clean.csv        # Cleaned, feature-rich dataset
-├── notebooks
-│   ├── 01_data_collection.ipynb    # Download price + sentiment data
-│   ├── 02_data_cleaning.ipynb      # Cleaning + feature engineering
-│   └── 03_eda.ipynb                # Exploratory data analysis
-└── README.md
-```
+The dashboard reads the processed CSV and serves charts via API endpoints.
 
-## Dataset
+## Outputs
 
-After processing, the main dataset `merged_clean.csv` contains one row per trading day with:
+After a successful fetch/pipeline run:
+- `data/raw/<TICKER>_prices.csv` (one per selected asset)
+- `data/raw/fear_greed_index.csv` (and/or trimmed variant depending on the pipeline)
+- `data/processed/merged_clean.csv`
 
-- `Close_BTC`, `Close_ETH` – daily closing prices (USD)  
-- `Volume_BTC`, `Volume_ETH` – daily traded volume  
-- `BTC_Return`, `ETH_Return` – daily returns  
-- `BTC_MA7`, `BTC_MA30`, `ETH_MA7`, `ETH_MA30` – 7-day & 30-day moving averages  
-- `BTC_Vol30`, `ETH_Vol30` – 30-day rolling volatility of returns  
-- `FG_Value` – Fear & Greed Index score (0–100)  
-- `value_classification` – sentiment label (Extreme Fear, Fear, Neutral, Greed, Extreme Greed)  
+The processed dataset typically includes columns like:
+- `Close_<T>`, `Volume_<T>`
+- `<T>_Return`, `<T>_MA7`, `<T>_MA30`, `<T>_Vol30`
+- `FG_Value`, `value_classification`
 
-## Getting Started
+## Setup
 
-### 1. Clone the repository
-
-```bash
-git clone <your-repo-url>
-cd <your-repo-folder>
-```
-
-### 2. Create and activate an environment (optional but recommended)
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # on Windows: .venv\Scripts\activate
-```
-
-### 3. Install dependencies
+### 1) Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If you don’t use a `requirements.txt`, install manually:
+### 2) Run the dashboard
 
 ```bash
-pip install pandas numpy yfinance requests matplotlib seaborn
+python app.py
 ```
 
-### 4. Run the notebooks
+Open: `http://127.0.0.1:5000`
 
-Run the notebooks in order inside Jupyter or VS Code:
+## Using The Dashboard
 
-1. `01_data_collection.ipynb` – downloads and saves raw data into `data/raw/`  
-2. `02_data_cleaning.ipynb` – loads raw CSVs, cleans and merges into `data/processed/merged_clean.csv`  
-3. `03_eda.ipynb` – performs EDA and generates plots and tables  
+1) Select one or more cryptocurrencies
+2) Select a start and end date
+3) Click **Fetch Data**
 
-## Main Analyses
+The dashboard will run the notebook pipeline and refresh:
+- Summary cards
+- Price & Sentiment time series
+- Analysis charts
+- Data table
 
-- Time-series plots of BTC/ETH prices vs Fear & Greed Index  
-- Distribution plots for returns and sentiment  
-- Correlation heatmaps for returns, volatility, and sentiment  
-- Scatter plots of sentiment vs returns  
-- Boxplots of returns across sentiment regimes  
-- Simple lag correlation checks using 1-day and 3-day lagged sentiment values  
+## Notebooks (Optional)
 
-## Possible Extensions
+You can also run the notebooks manually (in order) for exploration:
+1) `notebooks/01_data_collection.ipynb`
+2) `notebooks/02_data_cleaning.ipynb`
+3) `notebooks/03_eda.ipynb`
 
-- Add more cryptocurrencies or alternative sentiment indices  
-- Try different rolling windows for volatility  
-- Add basic forecasting models (ARIMA, GARCH, simple ML) on top of this EDA  
+## Notes
 
-***
+- Internet access is required (Yahoo Finance + Fear & Greed API)
+- If you select assets that are not present in `merged_clean.csv`, re-run the pipeline with those assets selected
